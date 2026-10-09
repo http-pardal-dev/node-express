@@ -15,8 +15,8 @@
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio",
     "db:setup": "prisma migrate dev && npm run db:seed",
-    "test:db:migrate": "cross-env DATABASE_URL=\"file:./storage/test.sqlite3\" prisma migrate deploy",
-    "test:db:seed": "cross-env DATABASE_URL=\"file:./storage/test.sqlite3\" node prisma/seed.js"
+    "test:db:migrate": "cross-env DATABASE_URL=\"file:../storage/test.sqlite3\" prisma migrate deploy",
+    "test:db:seed": "cross-env DATABASE_URL=\"file:../storage/test.sqlite3\" node prisma/seed.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

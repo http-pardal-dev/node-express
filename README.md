@@ -32,6 +32,10 @@ clients as text. See [`contract/database.sql`](contract/database.sql).
 | `contract/database.sql` | Machine-readable schema contract |
 | `storage/` | SQLite files, one per environment (git-ignored) |
 
+> Prisma resolves a relative SQLite path from the `prisma/` folder (where
+> `schema.prisma` lives), so `DATABASE_URL` uses `file:../storage/<env>.sqlite3`
+> to keep the databases at the project-root `storage/` directory.
+
 ## Getting started
 
 ```sh
@@ -76,9 +80,9 @@ database file is chosen with `DATABASE_URL`, following the same layout as
 
 | Environment | `DATABASE_URL` |
 | --- | --- |
-| development | `file:./storage/development.sqlite3` |
-| test | `file:./storage/test.sqlite3` |
-| production | `file:./storage/production.sqlite3` |
+| development | `file:../storage/development.sqlite3` |
+| test | `file:../storage/test.sqlite3` |
+| production | `file:../storage/production.sqlite3` |
 
 ## Seeds
 
