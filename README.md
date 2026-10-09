@@ -86,13 +86,25 @@ database file is chosen with `DATABASE_URL`, following the same layout as
 
 ## Seeds
 
-`prisma/seed.js` loads the same fixtures as the original and is idempotent:
+`prisma/seed.js` loads the same fixtures as the original and is idempotent. It
+only orchestrates the per-resource loaders under `prisma/seeds/`, the way
+`ruby-sinatra/db/seeds.rb` does; the data itself lives in YAML files, one per
+resource, mirroring `ruby-sinatra/db/seeds/*.yml`:
 
-- **users** — matched by `email` (stored stripped and lowercased); the shared
-  password `secret123` is hashed with bcrypt.
+| File | Loader | Identity |
+| --- | --- | --- |
+| `prisma/seeds/users.yml` | `prisma/seeds/users.js` | `email` |
+| `prisma/seeds/products.yml` | `prisma/seeds/products.js` | `name` |
+| `prisma/seeds/payments.yml` | `prisma/seeds/payments.js` | `amount` |
+
+- **users** — matched by `email` (stored stripped and lowercased); each
+  `password` from the YAML is hashed with bcrypt.
 - **products** — matched by `name`.
 - **payments** — matched by `amount`; `status` is applied on creation only, so
   a payment confirmed or cancelled through the API is never moved back.
+
+`prisma/seeds/load-list.js` reads a `seeds/*.yml` file into a list of records
+(the port of Ruby's `load_list`).
 
 Re-running `npm run db:seed` keeps the existing records instead of duplicating
 them.

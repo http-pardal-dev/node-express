@@ -93,10 +93,26 @@ function toJson(product) {
   };
 }
 
+// Maps writable attributes to the Prisma data object. Only the keys actually
+// present are included, so PATCH changes just those. price is passed through as
+// the string the client sent (Prisma stores it as a DECIMAL).
+function buildData(attributes) {
+  const data = {};
+  const has = (key) => Object.prototype.hasOwnProperty.call(attributes, key);
+
+  if (has("name")) data.name = attributes.name;
+  if (has("description")) data.description = isBlank(attributes.description) ? null : attributes.description;
+  if (has("category")) data.category = attributes.category;
+  if (has("price")) data.price = attributes.price;
+
+  return data;
+}
+
 module.exports = {
   MAX_PRICE,
   PUBLIC_ATTRIBUTES,
   WRITABLE_ATTRIBUTES,
   validate,
+  buildData,
   toJson,
 };

@@ -1,6 +1,7 @@
 "use strict";
 
 const bcrypt = require("bcryptjs");
+const prisma = require("../prisma");
 const { isBlank, isPresent, isValidISODate, todayISO, toISODate } = require("./support");
 
 // User model — CRUD and HTTP fundamentals.
@@ -58,22 +59,42 @@ async function hashPassword(plain) {
 }
 
 // Validates the attributes the way the model does, returning an array of
-// human-readable messages (empty when valid). `isCreate` decides whether the
-// password is required (create) or optional (update).
+// human-readable messages (empty when valid). On create, name/email/password
+// are required; on update (PATCH/PUT) only the fields the client actually sent
+// are checked — PUT forces name/email/role to be present (nil when omitted),
+// so a missing one fails the same required check.
 //
-// Email uniqueness is a database concern (a query) and is checked by the
-// caller, not here; the messages this returns match the model's own
-// validations.
-function validate(attributes, { isCreate = true } = {}) {
+// Email is normalized before its checks, the way the model's before_validation
+// hook does, so "  Ada@Example.COM  " is validated as "ada@example.com".
+// Uniqueness is checked against the database here, like the model's
+// uniqueness validation; a race that slips between the check and the insert
+// still answers 409 through the unique index (`errors.js`).
+async function validate(attributes, { isCreate = true, excludeId = null } = {}) {
   const errors = [];
+  const has = (key) => Object.prototype.hasOwnProperty.call(attributes, key);
 
-  validateName(attributes.name, errors);
-  validateEmail(attributes.email, errors);
-  validatePassword(attributes, { isCreate }, errors);
-  validateRole(attributes.role, errors);
-  validateBirthdate(attributes.birthdate, errors);
+  if (isCreate || has("name")) validateName(attributes.name, errors);
+  if (isCreate || has("email")) await validateEmail(attributes.email, errors, { excludeId });
+  if (isCreate || has("password") || has("password_confirmation")) {
+    validatePassword(attributes, { isCreate }, errors);
+  }
+  if (has("role")) validateRole(attributes.role, errors);
+  if (has("birthdate")) validateBirthdate(attributes.birthdate, errors);
 
   return errors;
+}
+
+// The stored record as writable attributes, so an update validates the merged
+// candidate (sent fields over the current state), the way assign_attributes +
+// valid? does in the original.
+function toCandidate(stored) {
+  return {
+    name: stored.name,
+    email: stored.email,
+    role: stored.role,
+    birthdate: stored.birthdate ? toISODate(stored.birthdate) : stored.birthdate,
+    active: stored.active,
+  };
 }
 
 function validateName(name, errors) {
@@ -85,17 +106,29 @@ function validateName(name, errors) {
   if (name.length > 100) errors.push("Name is too long (maximum is 100 characters)");
 }
 
-function validateEmail(email, errors) {
+async function validateEmail(email, errors, { excludeId = null } = {}) {
   if (isBlank(email)) {
     errors.push("Email can't be blank");
     return;
   }
-  if (email.length > MAX_EMAIL_LENGTH) {
+
+  const normalized = normalizeEmail(email);
+  if (normalized.length > MAX_EMAIL_LENGTH) {
     errors.push(`Email is too long (maximum is ${MAX_EMAIL_LENGTH} characters)`);
     return;
   }
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalized)) {
     errors.push("Email is invalid");
+    return;
+  }
+
+  // Uniqueness, the way the model's `uniqueness: { case_sensitive: false }`
+  // does — the normalized lookup keeps "Ada@Example.com" and
+  // "ada@example.com" from coexisting, and the update excludes its own record.
+  const existing = await prisma.user.findUnique({ where: { email: normalized } });
+  if (existing && existing.id !== excludeId) {
+    errors.push("Email has already been taken");
   }
 }
 
@@ -120,9 +153,10 @@ function validatePassword(attributes, { isCreate }, errors) {
 }
 
 function validateRole(role, errors) {
-  // role has a database default ("user"), so it is only rejected when sent and
-  // not one of the allowed values.
-  if (isPresent(role) && !ROLES.includes(role)) {
+  // role has a database default ("user") and no allow_nil, so it is only
+  // rejected when the key is present and not one of the allowed values. PUT
+  // forces the key to be present (nil when omitted), which then fails here.
+  if (!ROLES.includes(role)) {
     errors.push("Role is not included in the list");
   }
 }
@@ -155,6 +189,30 @@ function toJson(user) {
   };
 }
 
+// Maps writable attributes to the Prisma data object. Only the keys actually
+// present are included, so PATCH changes just those; PUT passes every key
+// (name/email/role forced present by the route). The virtual password becomes
+// a bcrypt digest, and birthdate becomes a Date (or null when cleared).
+async function buildData(attributes) {
+  const data = {};
+
+  if (Object.prototype.hasOwnProperty.call(attributes, "name")) data.name = attributes.name;
+  if (Object.prototype.hasOwnProperty.call(attributes, "email")) data.email = normalizeEmail(attributes.email);
+  if (Object.prototype.hasOwnProperty.call(attributes, "role")) data.role = attributes.role;
+  if (Object.prototype.hasOwnProperty.call(attributes, "active")) data.active = attributes.active;
+
+  if (Object.prototype.hasOwnProperty.call(attributes, "birthdate")) {
+    const birthdate = attributes.birthdate;
+    data.birthdate = isBlank(birthdate) ? null : new Date(`${birthdate}T00:00:00.000Z`);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(attributes, "password") && !isBlank(attributes.password)) {
+    data.passwordDigest = await hashPassword(attributes.password);
+  }
+
+  return data;
+}
+
 module.exports = {
   ROLES,
   MAX_EMAIL_LENGTH,
@@ -163,5 +221,6 @@ module.exports = {
   normalizeEmail,
   hashPassword,
   validate,
+  buildData,
   toJson,
 };

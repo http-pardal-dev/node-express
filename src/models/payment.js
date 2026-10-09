@@ -91,6 +91,15 @@ function toJson(payment) {
   };
 }
 
+// Maps writable attributes to the Prisma data object for a create. Only amount
+// is accepted; status is server-owned and always starts as DEFAULT_STATUS.
+function buildData(attributes) {
+  return {
+    amount: attributes.amount,
+    status: DEFAULT_STATUS,
+  };
+}
+
 module.exports = {
   STATUSES,
   DEFAULT_STATUS,
@@ -98,6 +107,7 @@ module.exports = {
   PUBLIC_ATTRIBUTES,
   WRITABLE_ATTRIBUTES,
   validate,
+  buildData,
   transition,
   toJson,
 };
