@@ -1,0 +1,18 @@
+# Dependencies
+/node_modules/
+
+# Local configuration
+/.env
+
+# SQLite databases (generated at runtime) and Prisma engines
+/storage/*.sqlite3
+/storage/*.sqlite3-journal
+/storage/*.sqlite3-wal
+/storage/*.sqlite3-shm
+!/storage/.gitkeep
+
+# Editors and operating system
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db

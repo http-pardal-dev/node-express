@@ -1,0 +1,38 @@
+{
+  "name": "node-express",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HTTP JSON API built with Node.js and Express, using Prisma and SQLite. Companion to ruby-sinatra, sharing the same API contract.",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset --force",
+    "db:seed": "node prisma/seed.js",
+    "db:studio": "prisma studio",
+    "db:setup": "prisma migrate dev && npm run db:seed",
+    "test:db:migrate": "cross-env DATABASE_URL=\"file:./storage/test.sqlite3\" prisma migrate deploy",
+    "test:db:seed": "cross-env DATABASE_URL=\"file:./storage/test.sqlite3\" node prisma/seed.js"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "prisma": "^6.2.1"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "prisma@6.19.3": true
+  }
+}
