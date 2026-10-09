@@ -29,7 +29,7 @@ const findById = (id) => prisma.payment.findUnique({ where: { id } });
 router.post("/", async (req, res, next) => {
   try {
     const attributes = restrictAttributes(jsonBody(req), Payment.WRITABLE_ATTRIBUTES);
-    validateOr400(Payment, attributes);
+    await validateOr400(Payment, attributes);
 
     const payment = await prisma.payment.create({ data: Payment.buildData(attributes) });
 

@@ -27,13 +27,18 @@ const PUBLIC_ATTRIBUTES = [
 ];
 
 // Validates the attributes, returning an array of human-readable messages.
-function validate(attributes) {
+// On create every field is required; on update (PATCH) only the fields the
+// client actually sent are checked, the way assign_attributes + valid? does in
+// the original (the stored record already passed validation, so re-checking
+// only the sent fields is equivalent).
+function validate(attributes, { isCreate = true } = {}) {
   const errors = [];
+  const has = (key) => Object.prototype.hasOwnProperty.call(attributes, key);
 
-  validateName(attributes.name, errors);
-  validateDescription(attributes.description, errors);
-  validateCategory(attributes.category, errors);
-  validatePrice(attributes.price, errors);
+  if (isCreate || has("name")) validateName(attributes.name, errors);
+  if (isCreate || has("description")) validateDescription(attributes.description, errors);
+  if (isCreate || has("category")) validateCategory(attributes.category, errors);
+  if (isCreate || has("price")) validatePrice(attributes.price, errors);
 
   return errors;
 }

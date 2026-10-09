@@ -43,7 +43,7 @@ router.get("/:id", async (req, res, next) => {
 router.post("/", async (req, res, next) => {
   try {
     const attributes = restrictAttributes(jsonBody(req), User.WRITABLE_ATTRIBUTES);
-    validateOr400(User, attributes, { isCreate: true });
+    await validateOr400(User, attributes, { isCreate: true });
 
     const user = await prisma.user.create({ data: await User.buildData(attributes) });
 
@@ -71,7 +71,7 @@ router.put("/:id", async (req, res, next) => {
       if (!Object.prototype.hasOwnProperty.call(attributes, required)) attributes[required] = null;
     }
 
-    validateOr400(User, attributes, { isCreate: false });
+    await validateOr400(User, attributes, { isCreate: false, excludeId: existing.id });
 
     const user = await prisma.user.update({
       where: { id: existing.id },
@@ -88,7 +88,7 @@ router.patch("/:id", async (req, res, next) => {
   try {
     const existing = await findOr404(req, req.params.id, { findById, label: "User" });
     const attributes = restrictAttributes(jsonBody(req), User.WRITABLE_ATTRIBUTES);
-    validateOr400(User, attributes, { isCreate: false });
+    await validateOr400(User, attributes, { isCreate: false, excludeId: existing.id });
 
     const user = await prisma.user.update({
       where: { id: existing.id },

@@ -18,7 +18,11 @@
     "db:studio": "prisma studio",
     "db:setup": "prisma migrate dev && npm run db:seed",
     "test:db:migrate": "cross-env DATABASE_URL=\"file:../storage/test.sqlite3\" prisma migrate deploy",
-    "test:db:seed": "cross-env DATABASE_URL=\"file:../storage/test.sqlite3\" node prisma/seed.js"
+    "test:db:seed": "cross-env DATABASE_URL=\"file:../storage/test.sqlite3\" node prisma/seed.js",
+    "pretest": "npm run test:db:migrate",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand",
+    "test:coverage": "jest --coverage --runInBand"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -28,11 +32,14 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
-    "js-yaml": "^4.3.2"
+    "js-yaml": "^4.3.2",
+    "pino": "^9.14.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "prisma": "^6.2.1"
+    "jest": "^29.7.0",
+    "prisma": "^6.2.1",
+    "supertest": "^7.3.1"
   },
   "allowScripts": {
     "@prisma/client@6.19.3": true,

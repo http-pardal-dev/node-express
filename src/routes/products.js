@@ -86,7 +86,7 @@ router.get("/:id", async (req, res, next) => {
 router.post("/", async (req, res, next) => {
   try {
     const attributes = restrictAttributes(jsonBody(req), Product.WRITABLE_ATTRIBUTES);
-    validateOr400(Product, attributes);
+    await validateOr400(Product, attributes);
 
     const product = await prisma.product.create({ data: Product.buildData(attributes) });
 
@@ -103,7 +103,7 @@ router.patch("/:id", async (req, res, next) => {
   try {
     const existing = await findOr404(req, req.params.id, { findById, label: "Product" });
     const attributes = restrictAttributes(jsonBody(req), Product.WRITABLE_ATTRIBUTES);
-    validateOr400(Product, attributes);
+    await validateOr400(Product, attributes, { isCreate: false });
 
     const product = await prisma.product.update({
       where: { id: existing.id },
