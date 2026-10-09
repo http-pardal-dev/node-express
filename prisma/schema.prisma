@@ -1,0 +1,71 @@
+// Prisma schema for the node-express API.
+//
+// It mirrors the SQLite schema of ruby-sinatra (see contract/database.sql and
+// ruby-sinatra/db/schema.rb): three independent resources, users, products and
+// payments, with no relations between them. Table and column names are kept in
+// snake_case with @map, so the database is byte-for-byte the same shape the
+// original produces and the shared contract stays valid.
+//
+// Money (products.price, payments.amount) is stored as a DECIMAL, like the
+// original, and exposed to clients as text ("159.9"), never as a JSON number,
+// so no client loses precision to a float. (SQLite has no strict DECIMAL scale;
+// the 2-decimal contract is enforced by the application layer.)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Users — CRUD and HTTP fundamentals.
+//
+// email identifies the user: the unique index is the last line of defence for
+// duplicates, the way it is in ruby-sinatra. password_digest holds a bcrypt
+// digest and is never returned to clients; password and password_confirmation
+// are virtual attributes of the original and have no column here either.
+model User {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  passwordDigest String   @map("password_digest")
+  role           String   @default("user")
+  active         Boolean  @default(true)
+  birthdate      DateTime?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+// Products — queries.
+//
+// price is stored with 2 decimal places and serialized to the client as text.
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  category    String
+  price       Decimal
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+// Payments — lifecycle.
+//
+// status is the state of the payment: it starts as "pending" and only moves to
+// "paid" (confirm) or "cancelled" (cancel). amount is money, stored with 2
+// decimal places and serialized to the client as text.
+model Payment {
+  id        Int      @id @default(autoincrement())
+  amount    Decimal
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
