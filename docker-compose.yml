@@ -1,0 +1,78 @@
+# Development and test environments in containers.
+#
+# The image (Dockerfile) carries the toolchain and the dependencies of
+# package-lock.json; the repository is always bind-mounted over /app, so what
+# runs is the working tree - the same files act copies into the CI containers.
+#
+#   docker compose build            # build the image (once, and after package-lock.json changes)
+#   docker compose up dev           # migrate + server on http://127.0.0.1:3000
+#   docker compose run --rm test    # migrate + the Jest suite
+#   docker compose run --rm lint    # ESLint (npm run lint)
+#   docker compose run --rm audit   # npm audit (production dependencies)
+#
+# test, lint and audit declare a profile, so plain `docker compose up` starts
+# only the dev service; the one-shot services run with `docker compose run`.
+
+x-service: &service
+  build:
+    context: .
+    args:
+      # Keep in sync with .node-version (the version CI's lint and audit jobs
+      # use); the test jobs of CI use the matrix 20/22/24.
+      NODE_VERSION: "22"
+  image: node-express:dev
+  volumes:
+    - .:/app
+
+services:
+  # Server for local development. Migrations run before node so a fresh
+  # container can boot (config/initializers/database.js stops on a database
+  # without tables). HOST=0.0.0.0 binds every interface *inside* the container,
+  # which no published port can reach; the port is published on the loopback
+  # interface of the host only: the API has no authentication, and 127.0.0.1 is
+  # the same guarantee the default HOST in config/boot.js gives (see the
+  # comments there).
+  dev:
+    <<: *service
+    init: true
+    environment:
+      APP_ENV: development
+      HOST: 0.0.0.0
+    command: >
+      sh -c "npm run db:deploy &&
+             exec npm start"
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  # The CI "test" job: migrations, then the suite, in APP_ENV=test against
+  # storage/test.sqlite3 (created on the host through the bind mount, like a
+  # local run, and ignored by git - see .gitignore).
+  #
+  # The suite is `npm test`, the command README documents and the command CI
+  # runs: it migrates first (pretest) and runs Jest serially (--runInBand).
+  test:
+    <<: *service
+    profiles: [test]
+    environment:
+      APP_ENV: test
+    command: >
+      sh -c "npm run test:db:migrate &&
+             npx jest --runInBand"
+
+  # ESLint with the rules of eslint.config.js. Known caveat: the config has no
+  # EndOfLine rule, but editors on Windows may still convert line endings on
+  # checkout; keep `* text=auto eol=lf` out of the way or expect CRLF noise in
+  # diffs (the linter itself only checks style, not line endings).
+  lint:
+    <<: *service
+    profiles: [lint]
+    command: npm run lint
+
+  # The CI "audit" job: vulnerabilities of the production dependencies, against
+  # the advisory database (fetched over the network on every run). Informative
+  # only (see the workflow): Prisma's deepmerge-ts advisory has no fixed
+  # release, so a failing audit must not block the suite.
+  audit:
+    <<: *service
+    profiles: [audit]
+    command: npm audit --omit=dev

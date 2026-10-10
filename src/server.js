@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 // Entry point: loads the environment (which refuses an unknown APP_ENV on its
 // own), verifies the database of the current environment exists, then builds
@@ -17,8 +17,9 @@ try {
   verifyDatabase();
 } catch (err) {
   if (err instanceof DatabaseError) {
-    // eslint-disable-next-line no-console
-    console.error(`\n${err.message}\n`);
+    console.error("");
+    console.error(err.message);
+    console.error("");
     process.exit(1);
   }
   throw err;
@@ -27,6 +28,5 @@ try {
 const app = createApp();
 
 app.listen(PORT, HOST, () => {
-  // eslint-disable-next-line no-console
   console.log(`node-express listening on http://${HOST}:${PORT} (${APP_ENV})`);
 });

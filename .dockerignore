@@ -1,0 +1,32 @@
+# The image copies only package.json and package-lock.json (plus the Prisma
+# schema the client is generated from; the source is bind-mounted at runtime,
+# see docker-compose.yml), so the build context only has to leave out what must
+# never enter an image, and what would only bloat the upload.
+
+# Version control and CI (never needed inside the image).
+.git
+.github
+
+# Secrets and machine-local state.
+.env
+.idea
+.vscode
+.DS_Store
+Thumbs.db
+
+# Dependencies and build output generated on the host: they are for the host's
+# Node, and a Windows build of a native module is useless inside a Linux
+# container.
+node_modules
+coverage
+
+# Databases generated on the host: a Windows SQLite file works, but the test
+# database must be migrated inside the container's own environment.
+storage/*
+!storage/.gitkeep
+*.sqlite3
+
+# Scratch files of local act runs.
+act-*.log
+act-*.err
+act.pid

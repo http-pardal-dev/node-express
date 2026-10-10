@@ -1,0 +1,22 @@
+# act configuration (https://github.com/nektos/act): run `act` with the same
+# options every time, from the repository root.
+#
+# -W: only the CI workflow.
+#
+# -P: act cannot run the macOS or Windows runners - everything runs in Linux
+#     containers - so every label of the matrix maps to the same image. The
+#     ghcr.io mirror is used because Docker Hub limits anonymous pulls on this
+#     network (HTTP 429 Too Many Requests), and the mirror carries the same
+#     catthehacker image.
+#
+# --concurrent-jobs: three jobs at a time keeps Docker Desktop responsive
+#     while the 3x3 test matrix runs.
+#
+# --rm: remove the containers even when a job fails; the log already keeps
+#     the output of every step.
+-W .github/workflows/ci.yml
+-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest
+-P macos-latest=ghcr.io/catthehacker/ubuntu:act-latest
+-P windows-latest=ghcr.io/catthehacker/ubuntu:act-latest
+--concurrent-jobs 3
+--rm

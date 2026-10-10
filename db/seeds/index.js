@@ -32,7 +32,7 @@ async function main() {
   const products = await loadProducts();
   const payments = await loadPayments();
 
-  // eslint-disable-next-line no-console
+  // person running it, not to the request log.
   console.log(
     `Seeds loaded: ${users} user(s), ${products} product(s), ${payments} payment(s).`
   );
@@ -41,7 +41,6 @@ async function main() {
 main()
   .then(() => prisma.$disconnect())
   .catch(async (error) => {
-    // eslint-disable-next-line no-console
     console.error(error);
     await prisma.$disconnect();
     process.exitCode = 1;

@@ -84,19 +84,6 @@ async function validate(attributes, { isCreate = true, excludeId = null } = {}) 
   return errors;
 }
 
-// The stored record as writable attributes, so an update validates the merged
-// candidate (sent fields over the current state), the way assign_attributes +
-// valid? does in the original.
-function toCandidate(stored) {
-  return {
-    name: stored.name,
-    email: stored.email,
-    role: stored.role,
-    birthdate: stored.birthdate ? toISODate(stored.birthdate) : stored.birthdate,
-    active: stored.active,
-  };
-}
-
 function validateName(name, errors) {
   if (isBlank(name)) {
     errors.push("Name can't be blank");

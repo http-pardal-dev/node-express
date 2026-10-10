@@ -19,3 +19,6 @@
 /.vscode/
 .DS_Store
 Thumbs.db
+
+# Local act runs (https://github.com/nektos/act), e.g. `act ... > act-test.log`
+/act-*.log

@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  # The application, the database configuration and the test helper all read
+  # `test` for the environment that points at `storage/test.sqlite3`
+  # (see config/boot.js and test/test_helper.js).
+  APP_ENV: test
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Tests
+  # ---------------------------------------------------------------------------
+  test:
+    name: Test (Node ${{ matrix.node-version }} on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22", "24"]
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        # `npm ci` installs the exact locked tree and fails when package.json
+        # and package-lock.json disagree (the counterpart of BUNDLE_FROZEN in
+        # the Dockerfile).
+        run: npm ci
+
+      - name: Run database migrations
+        run: npm run test:db:migrate
+
+      - name: Run the Jest suite
+        # `npm test` migrates first (pretest) and runs Jest serially
+        # (--runInBand): the specs share one SQLite file, so parallel workers
+        # fight over the same rows (see jest.config.js).
+        run: npm test
+
+  # ---------------------------------------------------------------------------
+  # Lint
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # ---------------------------------------------------------------------------
+  # Security
+  # ---------------------------------------------------------------------------
+  audit:
+    name: Audit (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        # Production dependencies only, informative for now: Prisma's
+        # deepmerge-ts advisory (GHSA-ggr8-5vv4-36mx) has no fixed release in
+        # the 6.x line, so a failing audit reports but does not fail the job.
+        # Revisit once `npm audit fix` resolves it without breaking the suite.
+        run: npm audit --omit=dev || echo "npm audit reported vulnerabilities (non-blocking)"

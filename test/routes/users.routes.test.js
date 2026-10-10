@@ -5,7 +5,7 @@
 // contract: status codes, response shapes and headers. The counterpart of
 // ruby-sinatra's spec/routes/users_routes_spec.rb.
 
-const { get, post, del, postJson, putJson, patchJson } = require("../support/helpers/request");
+const { get, del, postJson, putJson, patchJson } = require("../support/helpers/request");
 const { hardenedJsonEndpoint } = require("../shared/hardened-json-endpoint");
 
 // The smallest valid user body: name, email and password decide validity.
