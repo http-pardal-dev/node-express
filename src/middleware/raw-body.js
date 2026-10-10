@@ -1,6 +1,6 @@
 "use strict";
 
-const { HttpError } = require("../errors/errors");
+const { HttpError } = require("../../lib/errors/errors");
 const { MAX_BODY_BYTES } = require("../helpers/json");
 
 // Captures the raw request body into req.rawBody, enforcing the 64 KB limit

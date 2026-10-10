@@ -1,13 +1,13 @@
 "use strict";
 
-// Seeds: products. Fixtures live in seeds/products.yml, the port of
-// ruby-sinatra/db/seeds/products.yml.
+// Seeds: products. Fixtures live in data/products.yml, the port of
+// ruby-sinatra/db/data/products.yml.
 //
 // The loader is idempotent, so re-running it keeps the existing records
 // instead of creating duplicates: products are matched by name.
 
-const prisma = require("../../src/prisma");
-const { loadList } = require("./load-list");
+const { prisma } = require("../../../config/initializers/database");
+const { loadList } = require("../load-list");
 
 async function loadProducts() {
   let created = 0;

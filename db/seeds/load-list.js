@@ -1,6 +1,6 @@
 "use strict";
 
-// Reads a seeds/*.yml file into a list of records, mirroring `load_list` in
+// Reads a db/seeds/data/*.yml file into a list of records, mirroring `load_list`
 // ruby-sinatra/db/seeds.rb. A missing file yields an empty list; a file that is
 // not a YAML list is refused, so a malformed fixture fails loudly instead of
 // silently seeding nothing.
@@ -12,10 +12,10 @@ const fs = require("fs");
 const path = require("path");
 const yaml = require("js-yaml");
 
-// Resolves a file name against this folder (prisma/seeds/), so callers pass
-// just "users.yml" and the path does not depend on the current directory.
+// Resolves a file name against the data folder (db/seeds/data/), so callers
+// pass just "users.yml" and the path does not depend on the current directory.
 function seedsPath(name) {
-  return path.join(__dirname, name);
+  return path.join(__dirname, "data", name);
 }
 
 // Loads and validates a seeds file, returning its list of records (plain

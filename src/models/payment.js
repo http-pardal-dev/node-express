@@ -1,6 +1,6 @@
 "use strict";
 
-const prisma = require("../prisma");
+const { prisma } = require("../../config/initializers/database");
 const { isBlank, asNumber, formatMoney } = require("./support");
 
 // Payment model — lifecycle.

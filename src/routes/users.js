@@ -1,7 +1,7 @@
 "use strict";
 
 const express = require("express");
-const prisma = require("../prisma");
+const { prisma } = require("../../config/initializers/database");
 const { User } = require("../models");
 const { json, jsonBody } = require("../helpers/json");
 const { findOr404, restrictAttributes, validateOr400 } = require("../helpers/records");

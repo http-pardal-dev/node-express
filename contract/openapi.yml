@@ -1,0 +1,652 @@
+openapi: 3.0.3
+info:
+  title: HTTP Pardal API
+  description: >-
+    JSON API with three resources: users (CRUD), products (queries) and
+    payments (lifecycle). Every response is JSON, errors included.
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:3000
+    description: Local
+
+tags:
+  - name: health
+    description: Whether the API is up
+  - name: users
+  - name: products
+  - name: payments
+
+paths:
+  /:
+    get:
+      tags: [health]
+      summary: Health check
+      responses:
+        '200':
+          description: The API is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [service, status]
+                properties:
+                  service: { type: string, example: node-express }
+                  status:  { type: string, enum: [ok] }
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+
+  /users:
+    get:
+      tags: [users]
+      summary: Lists all users
+      responses:
+        '200':
+          description: Every user, active or not
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [users]
+                properties:
+                  users:
+                    type: array
+                    items: { $ref: '#/components/schemas/User' }
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+    post:
+      tags: [users]
+      summary: Creates a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserCreate' }
+      responses:
+        '201':
+          description: The user created, with the Location header
+          headers:
+            Location:
+              description: Path of the created user
+              schema: { type: string, example: /users/8 }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/BodyTooLarge'
+
+  /users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [users]
+      summary: Finds a user
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+    put:
+      tags: [users]
+      summary: Replaces a user
+      description: >-
+        name, email and role are required; the optional fields left out keep
+        their previous value. Repeating the request leaves the user unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserUpdate' }
+      responses:
+        '200':
+          description: The replaced user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/BodyTooLarge'
+    patch:
+      tags: [users]
+      summary: Partially updates a user
+      description: >-
+        No field is required; only the fields sent change. An empty body
+        returns the user unchanged.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserUpdate' }
+      responses:
+        '200':
+          description: The updated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/BodyTooLarge'
+    delete:
+      tags: [users]
+      summary: Removes a user
+      responses:
+        '204':
+          description: Removed, with no body
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+  /products:
+    get:
+      tags: [products]
+      summary: Lists products
+      description: Filter, sort and paginate with the query parameters below.
+      parameters:
+        - name: category
+          in: query
+          description: Only products of this category
+          required: false
+          schema: { type: string, maxLength: 50 }
+        - name: min_price
+          in: query
+          description: Lowest price, inclusive
+          required: false
+          schema: { type: string, pattern: '^[+-]?(\d+(\.\d+)?|\.\d+)$' }
+        - name: max_price
+          in: query
+          description: Highest price, inclusive
+          required: false
+          schema: { type: string, pattern: '^[+-]?(\d+(\.\d+)?|\.\d+)$' }
+        - name: sort
+          in: query
+          description: >-
+            Column to sort by; a leading "-" means descending. The id always
+            breaks ties so that walking the pages never skips or repeats.
+          required: false
+          schema:
+            type: string
+            enum: [id, name, price, category, created_at, '-id', '-name', '-price', '-category', '-created_at']
+            default: id
+        - name: page
+          in: query
+          description: 1-based page number
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          description: How many products the page returns
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: The requested page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items: { $ref: '#/components/schemas/Product' }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+    post:
+      tags: [products]
+      summary: Creates a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductCreate' }
+      responses:
+        '201':
+          description: The product created, with the Location header
+          headers:
+            Location:
+              description: Path of the created product
+              schema: { type: string, example: /products/8 }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  product: { $ref: '#/components/schemas/Product' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '413':
+          $ref: '#/components/responses/BodyTooLarge'
+
+  /products/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [products]
+      summary: Finds a product
+      responses:
+        '200':
+          description: The product
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  product: { $ref: '#/components/schemas/Product' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+    patch:
+      tags: [products]
+      summary: Partially updates a product
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductUpdate' }
+      responses:
+        '200':
+          description: The updated product
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  product: { $ref: '#/components/schemas/Product' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '413':
+          $ref: '#/components/responses/BodyTooLarge'
+
+  /payments:
+    get:
+      tags: [payments]
+      summary: Lists payments
+      parameters:
+        - name: status
+          in: query
+          description: Only payments in this state
+          required: false
+          schema:
+            type: string
+            enum: [pending, paid, cancelled]
+      responses:
+        '200':
+          description: Every payment when no filter is sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payments:
+                    type: array
+                    items: { $ref: '#/components/schemas/Payment' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+    post:
+      tags: [payments]
+      summary: Creates a payment
+      description: >-
+        A payment is always created pending. `status` is not accepted in the
+        body: it is an unknown field.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentCreate' }
+      responses:
+        '201':
+          description: The payment created, pending, with the Location header
+          headers:
+            Location:
+              description: Path of the created payment
+              schema: { type: string, example: /payments/10 }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment: { $ref: '#/components/schemas/Payment' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '413':
+          $ref: '#/components/responses/BodyTooLarge'
+
+  /payments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [payments]
+      summary: Finds a payment
+      responses:
+        '200':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment: { $ref: '#/components/schemas/Payment' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+
+  /payments/{id}/confirm:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [payments]
+      summary: Confirms a payment
+      description: >-
+        Moves a pending payment to paid. Requires no body and no
+        Content-Type. The transition is atomic, so of two concurrent requests
+        exactly one wins and the other answers 409.
+      responses:
+        '200':
+          description: The payment, already paid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment: { $ref: '#/components/schemas/Payment' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /payments/{id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [payments]
+      summary: Cancels a payment
+      description: >-
+        Moves a pending payment to cancelled. Requires no body and no
+        Content-Type. The transition is atomic, so of two concurrent requests
+        exactly one wins and the other answers 409.
+      responses:
+        '200':
+          description: The payment, already cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment: { $ref: '#/components/schemas/Payment' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: Positive whole number of the record
+      schema: { type: integer, minimum: 1 }
+
+  responses:
+    BadRequest:
+      description: >-
+        Invalid JSON, unknown field, failed validation or invalid parameter
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No record with that id, or no such path
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    MethodNotAllowed:
+      description: The path exists for other methods
+      headers:
+        Allow:
+          description: Methods accepted on this path, comma separated
+          schema: { type: string, example: GET, HEAD, POST }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/MethodNotAllowedError' }
+    Conflict:
+      description: >-
+        The record already exists (unique email lost a race) or the payment
+        cannot leave its current state
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    BodyTooLarge:
+      description: The body is over 64 KB
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Short readable reason
+          example: Validation failed
+        messages:
+          type: array
+          description: Present when a single error is not enough
+          items: { type: string }
+
+    MethodNotAllowedError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            allow:
+              type: string
+              example: GET, HEAD, POST
+
+    User:
+      type: object
+      required: [id, name, email, role, active, created_at, updated_at]
+      properties:
+        id:         { type: integer, minimum: 1, example: 8 }
+        name:       { type: string, minLength: 2, maxLength: 100, example: Ada Lovelace }
+        email:
+          type: string
+          maxLength: 254
+          description: Stored and returned stripped and in lower case
+          example: ada@example.com
+        role:       { type: string, enum: [user, admin], default: user }
+        active:     { type: boolean, default: true }
+        birthdate:
+          type: string
+          format: date
+          nullable: true
+          description: null when absent; never a future date
+          example: '2000-01-01'
+        created_at: { type: string, format: date-time, example: '2026-10-03T21:22:40.880Z' }
+        updated_at: { type: string, format: date-time, example: '2026-10-03T21:22:40.880Z' }
+
+    UserCreate:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:                 { type: string, minLength: 2, maxLength: 100 }
+        email:                { type: string, maxLength: 254 }
+        password:             { type: string, minLength: 8 }
+        password_confirmation:
+          type: string
+          description: When sent, it must match password
+        role:                 { type: string, enum: [user, admin], default: user }
+        active:               { type: boolean, default: true }
+        birthdate:
+          type: string
+          format: date
+          nullable: true
+
+    UserUpdate:
+      type: object
+      description: >-
+        The same fields as UserCreate. On PUT, name, email and role are
+        required; on PATCH nothing is.
+      properties:
+        name:                 { type: string, minLength: 2, maxLength: 100 }
+        email:                { type: string, maxLength: 254 }
+        password:             { type: string, minLength: 8 }
+        password_confirmation: { type: string }
+        role:                 { type: string, enum: [user, admin] }
+        active:               { type: boolean }
+        birthdate:
+          type: string
+          format: date
+          nullable: true
+
+    Product:
+      type: object
+      required: [id, name, category, price, created_at, updated_at]
+      properties:
+        id:          { type: integer, minimum: 1, example: 8 }
+        name:        { type: string, minLength: 2, maxLength: 100, example: Keyboard }
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: null when absent
+          example: nice
+        category:    { type: string, minLength: 2, maxLength: 50, example: peripherals }
+        price:
+          type: string
+          description: >-
+            Money is text, never a JSON number. At most 2 decimal places,
+            at least 1 digit after the point, at most 99999999.99
+          example: '159.9'
+        created_at:  { type: string, format: date-time, example: '2026-10-03T21:22:40.938Z' }
+        updated_at:  { type: string, format: date-time, example: '2026-10-03T21:22:40.938Z' }
+
+    ProductCreate:
+      type: object
+      required: [name, category, price]
+      properties:
+        name:        { type: string, minLength: 2, maxLength: 100 }
+        description: { type: string, maxLength: 1000, nullable: true }
+        category:    { type: string, minLength: 2, maxLength: 50 }
+        price:
+          oneOf:
+            - { type: string }
+            - { type: number }
+          description: Accepted as text or as a JSON number; returned as text
+
+    ProductUpdate:
+      type: object
+      description: The same fields as ProductCreate; none is required.
+      properties:
+        name:        { type: string, minLength: 2, maxLength: 100 }
+        description: { type: string, maxLength: 1000, nullable: true }
+        category:    { type: string, minLength: 2, maxLength: 50 }
+        price:
+          oneOf:
+            - { type: string }
+            - { type: number }
+
+    Payment:
+      type: object
+      required: [id, amount, status, created_at, updated_at]
+      properties:
+        id:         { type: integer, minimum: 1, example: 10 }
+        amount:
+          type: string
+          description: Money is text, at most 2 decimal places
+          example: '99.9'
+        status:
+          type: string
+          enum: [pending, paid, cancelled]
+          description: pending to paid or cancelled; no other transition
+        created_at: { type: string, format: date-time, example: '2026-10-03T21:22:40.983Z' }
+        updated_at: { type: string, format: date-time, example: '2026-10-03T21:22:40.983Z' }
+
+    PaymentCreate:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          oneOf:
+            - { type: string }
+            - { type: number }
+          description: >-
+            Accepted as text or as a JSON number; greater than 0 and at most
+            99999999.99. `status` is not accepted here.
+          example: '99.9'
+
+    Pagination:
+      type: object
+      required: [page, limit, total]
+      properties:
+        page:  { type: integer, minimum: 1, example: 1 }
+        limit: { type: integer, minimum: 1, maximum: 100, example: 10 }
+        total: { type: integer, minimum: 0, example: 42 }

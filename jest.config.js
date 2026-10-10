@@ -11,7 +11,7 @@
 //                                    (404, 405, 400, 500).
 //
 // The database is storage/test.sqlite3, selected with DATABASE_URL the same way
-// the npm scripts do. test/setup.js forces APP_ENV=test and cleans the tables
+// the npm scripts do. test/test_helper.js forces APP_ENV=test and cleans the
 // between examples, so prepare it once with `npm run test:db:migrate`.
 //
 // The specs share one SQLite file and clean its tables between examples, so
@@ -28,7 +28,7 @@ module.exports = {
 
   // Forces APP_ENV=test and DATABASE_URL before any app module loads, then
   // cleans the tables between examples (the counterpart of spec_helper.rb).
-  setupFilesAfterEnv: ["<rootDir>/test/setup.js"],
+  setupFilesAfterEnv: ["<rootDir>/test/test_helper.js"],
 
   // Each test file runs in isolation; failing fast on a leaked handle keeps a
   // hanging Prisma connection from masking a real result.
@@ -36,5 +36,5 @@ module.exports = {
 
   // The suite talks to a real SQLite database and boots the Express app, so it
   // is integration-first; coverage is opt-in via `npm run test:coverage`.
-  collectCoverageFrom: ["src/**/*.js", "!src/server.js"],
+  collectCoverageFrom: ["src/**/*.js", "config/**/*.js", "lib/**/*.js", "!src/server.js"],
 };

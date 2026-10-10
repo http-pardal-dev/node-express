@@ -7,7 +7,7 @@
 // server did not expect. The counterpart of ruby-sinatra's spec/errors_spec.rb.
 
 const { get, post, put, del, postJson } = require("./support/helpers/request");
-const prisma = require("../src/prisma");
+const { prisma } = require("../config/initializers/database");
 
 describe("HTTP protocol", () => {
   it("GET /nope returns 404 for a route that does not exist", async () => {

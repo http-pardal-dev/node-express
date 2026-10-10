@@ -1,7 +1,8 @@
 "use strict";
 
 const express = require("express");
-const { notFoundHandler, errorHandler } = require("./errors/errors");
+const { APP_ENV } = require("../config/boot");
+const { notFoundHandler, errorHandler } = require("../lib/errors/errors");
 const { captureRawBody } = require("./middleware/raw-body");
 const { requestLogger } = require("./middleware/request-logger");
 
@@ -9,11 +10,17 @@ const { requestLogger } = require("./middleware/request-logger");
 //
 // Every response uses the application/json content-type; the request body is
 // captured raw and parsed as JSON by the helpers; errors (404, 405, 500) also
-// return JSON. Database access uses Prisma (see src/prisma.js). Requests are
-// logged through Pino (see middleware/request-logger.js), silent in test the
-// way `App.set :logging, false` is.
+// return JSON. Database access uses the shared Prisma Client (see
+// config/initializers/database.js). Requests are logged through Pino (see
+// middleware/request-logger.js) only in the environments whose settings enable
+// it (see config/environments/*.js), the way `App.set :logging` does.
 function createApp() {
   const app = express();
+
+  // The settings are read without running config/environment.js: the app is
+  // also built by the tests (which set APP_ENV=test and manage the database
+  // themselves) and by nothing else that wants the server boot validations.
+  const envSettings = require(`../config/environments/${APP_ENV}`);
 
   // No framework banner, and JSON is produced by the helpers/Prisma, so the
   // default parsers are not installed: the raw body is captured instead.
@@ -22,7 +29,7 @@ function createApp() {
   // parses them in the original: an Array under the key, which the params
   // helpers reject with 400 instead of silently picking a value.
   app.set("query parser", "extended");
-  app.use(requestLogger);
+  if (envSettings.requestLogging) app.use(requestLogger);
   app.use(captureRawBody);
 
   // Health check route: confirms the server is up.

@@ -1,6 +1,6 @@
 "use strict";
 
-const { HttpError } = require("../errors/errors");
+const { HttpError } = require("../../lib/errors/errors");
 
 // Shared resource behavior: lookup, attribute filtering and persistence,
 // mirroring app/helpers/records.rb.

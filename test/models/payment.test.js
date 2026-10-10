@@ -5,7 +5,7 @@
 // transition reads and writes the database, so those cases run against
 // storage/test.sqlite3.
 
-const prisma = require("../../src/prisma");
+const { prisma } = require("../../config/initializers/database");
 const { Payment } = require("../../src/models");
 
 // A pending payment: only amount is sent, status is server-owned.

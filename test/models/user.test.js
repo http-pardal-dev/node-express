@@ -8,7 +8,7 @@
 // messages (empty when valid), except the email uniqueness check, which reads
 // the database — so `email` cases run against storage/test.sqlite3.
 
-const prisma = require("../../src/prisma");
+const { prisma } = require("../../config/initializers/database");
 const { User } = require("../../src/models");
 
 // The smallest valid user: name, email and password decide validity, and the

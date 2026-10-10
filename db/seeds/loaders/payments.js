@@ -1,15 +1,15 @@
 "use strict";
 
-// Seeds: payments. Fixtures live in seeds/payments.yml, the port of
-// ruby-sinatra/db/seeds/payments.yml.
+// Seeds: payments. Fixtures live in data/payments.yml, the port of
+// ruby-sinatra/db/data/payments.yml.
 //
 // The loader is idempotent, so re-running it keeps the existing records
 // instead of creating duplicates: payments are matched by amount. status is
 // server-owned and only applied on creation, so a payment confirmed or
 // cancelled through the API is never moved back.
 
-const prisma = require("../../src/prisma");
-const { loadList } = require("./load-list");
+const { prisma } = require("../../../config/initializers/database");
+const { loadList } = require("../load-list");
 
 // Initial state a payment is created in; matches the model's default.
 const DEFAULT_STATUS = "pending";

@@ -6,7 +6,7 @@
 
 const { get, postJson, patchJson } = require("../support/helpers/request");
 const { hardenedJsonEndpoint } = require("../shared/hardened-json-endpoint");
-const prisma = require("../../src/prisma");
+const { prisma } = require("../../config/initializers/database");
 
 // The smallest valid product body.
 function productBody(overrides = {}) {

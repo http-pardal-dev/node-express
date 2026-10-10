@@ -1,13 +1,13 @@
 "use strict";
 
-// Unit tests for the logger (src/logger.js). The logger's behaviour is decided
-// by APP_ENV, the way ruby-sinatra swaps the Logger per environment
-// (config/environments/*.rb). The suite runs with APP_ENV=test (see
-// test/setup.js), which must be silent so the output stays readable — the
+// Unit tests for the logger (config/initializers/logger.js). The logger's
+// behaviour is decided by APP_ENV, the way ruby-sinatra swaps the Logger per
+// environment (config/environments/*.rb). The suite runs with APP_ENV=test (see
+// test/test_helper.js), which must be silent so the output stays readable —
 // counterpart of `App.set :logging, false` in the test environment.
 
-const logger = require("../src/logger");
-const { APP_ENV } = require("../src/config");
+const logger = require("../config/initializers/logger");
+const { APP_ENV } = require("../config/boot");
 
 describe("logger", () => {
   it("is silent in the test environment", () => {

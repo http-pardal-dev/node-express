@@ -1,7 +1,7 @@
 "use strict";
 
 const bcrypt = require("bcryptjs");
-const prisma = require("../prisma");
+const { prisma } = require("../../config/initializers/database");
 const { isBlank, isPresent, isValidISODate, todayISO, toISODate } = require("./support");
 
 // User model — CRUD and HTTP fundamentals.

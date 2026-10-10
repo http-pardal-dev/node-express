@@ -1,7 +1,7 @@
 "use strict";
 
-// Seeds: users. Fixtures live in seeds/users.yml, the port of
-// ruby-sinatra/db/seeds/users.yml.
+// Seeds: users. Fixtures live in data/users.yml, the port of
+// ruby-sinatra/db/data/users.yml.
 //
 // The loader is idempotent, so re-running it keeps the existing records
 // instead of creating duplicates: users are matched by email (stripped and
@@ -10,8 +10,8 @@
 // mirrors the Ruby fixture and is ignored here.
 
 const bcrypt = require("bcryptjs");
-const prisma = require("../../src/prisma");
-const { loadList } = require("./load-list");
+const { prisma } = require("../../../config/initializers/database");
+const { loadList } = require("../load-list");
 
 // bcrypt cost, matching the original's has_secure_password default (10).
 const BCRYPT_COST = 10;

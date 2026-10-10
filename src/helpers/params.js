@@ -1,6 +1,6 @@
 "use strict";
 
-const { HttpError } = require("../errors/errors");
+const { HttpError } = require("../../lib/errors/errors");
 
 // Shared validation of query parameters: pagination, sorting and filters,
 // mirroring app/helpers/params.rb.

@@ -22,7 +22,7 @@
 process.env.APP_ENV = "test";
 process.env.DATABASE_URL = "file:../storage/test.sqlite3";
 
-const prisma = require("../src/prisma");
+const { prisma } = require("../config/initializers/database");
 
 // Each example starts with empty tables, so records created by one test never
 // leak into another. There are no foreign keys between the tables, so the order

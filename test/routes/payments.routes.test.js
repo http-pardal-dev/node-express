@@ -6,7 +6,7 @@
 
 const { get, post, postJson } = require("../support/helpers/request");
 const { hardenedJsonEndpoint } = require("../shared/hardened-json-endpoint");
-const prisma = require("../../src/prisma");
+const { prisma } = require("../../config/initializers/database");
 
 // Creates a payment through the API and returns the parsed resource.
 async function createPayment(overrides = {}) {

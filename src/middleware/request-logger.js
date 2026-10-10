@@ -1,15 +1,14 @@
 "use strict";
 
-const logger = require("../logger");
+const logger = require("../../config/initializers/logger");
 
 // Logs every incoming request and its response, the counterpart of the request
 // logging ruby-sinatra turns on with `App.set :logging, true` in development
-// (and off in test and production). Here the level of the shared logger decides
-// it instead: in `test` the logger is silent, so the middleware records nothing
-// and the suite output stays clean, exactly like `logging, false`.
-//
-// It logs after the response finishes, so the status code and the duration are
-// already known, on a single structured line per request.
+// (and off in test and production). Whether it is installed is decided by the
+// environment settings (see config/environments/*.js and app.js); the
+// middleware only records the line, after the response finishes, so the status
+// code and the duration are already known, on a single structured line per
+// request.
 function requestLogger(req, res, next) {
   const start = process.hrtime.bigint();
 

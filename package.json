@@ -14,18 +14,18 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset --force",
-    "db:seed": "node prisma/seed.js",
+    "db:seed": "node db/seeds",
     "db:studio": "prisma studio",
     "db:setup": "prisma migrate dev && npm run db:seed",
     "test:db:migrate": "cross-env DATABASE_URL=\"file:../storage/test.sqlite3\" prisma migrate deploy",
-    "test:db:seed": "cross-env DATABASE_URL=\"file:../storage/test.sqlite3\" node prisma/seed.js",
+    "test:db:seed": "cross-env DATABASE_URL=\"file:../storage/test.sqlite3\" node db/seeds",
     "pretest": "npm run test:db:migrate",
     "test": "jest --runInBand",
     "test:watch": "jest --watch --runInBand",
     "test:coverage": "jest --coverage --runInBand"
   },
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "seed": "node db/seeds"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",

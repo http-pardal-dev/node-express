@@ -1,6 +1,6 @@
 "use strict";
 
-const { HttpError } = require("../errors/errors");
+const { HttpError } = require("../../lib/errors/errors");
 
 // Helpers for JSON handling in requests and responses, mirroring
 // app/helpers/json.rb.

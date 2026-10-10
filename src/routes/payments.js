@@ -1,12 +1,12 @@
 "use strict";
 
 const express = require("express");
-const prisma = require("../prisma");
+const { prisma } = require("../../config/initializers/database");
 const { Payment } = require("../models");
 const { json, jsonBody } = require("../helpers/json");
 const { findOr404, restrictAttributes, validateOr400 } = require("../helpers/records");
 const { inclusionParam } = require("../helpers/params");
-const { HttpError } = require("../errors/errors");
+const { HttpError } = require("../../lib/errors/errors");
 
 // Routes for the Payments resource — lifecycle.
 //
