@@ -10,7 +10,7 @@ locally. The equivalent of the CI the `ruby-sinatra` workflows provide.
 
 | Job | Runner | What it does |
 | --- | --- | --- |
-| `test` | matrix 20/22/24 × ubuntu/macOS/windows | `npm ci`, migrate the test database (`npm run test:db:migrate`), `npm test` |
+| `test` | matrix 20/22/24 × ubuntu/macOS/windows | `npm ci`, generate the Prisma Client (`npm run db:generate`), migrate the test database (`npm run test:db:migrate`), `npm test` |
 | `lint` | ubuntu-latest | `npm ci` + `npm run lint` (Node from `.node-version`) |
 | `audit` | ubuntu-latest | `npm audit --omit=dev` — informative only, does not fail the job |
 
@@ -56,6 +56,7 @@ Notes:
 
 | Command | What it does |
 | --- | --- |
+| `npm run db:generate` | Generate the Prisma Client from `prisma/schema.prisma` (what CI runs right after `npm ci`) |
 | `npm run test:db:migrate` | Apply migrations to `storage/test.sqlite3` (what CI runs before the suite) |
 | `npm run lint` | ESLint over the project |
 | `npm run lint:fix` | ESLint with `--fix` |

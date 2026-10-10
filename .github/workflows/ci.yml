@@ -45,6 +45,13 @@ jobs:
         # the Dockerfile).
         run: npm ci
 
+      - name: Generate the Prisma Client
+        # Explicit, the same way the Dockerfile does it: the @prisma/client
+        # postinstall does not run `prisma generate` on every platform (it is
+        # skipped on the Windows runners), and without the generated client
+        # every suite fails at import with "did not initialize yet".
+        run: npm run db:generate
+
       - name: Run database migrations
         run: npm run test:db:migrate
 
